@@ -1,0 +1,5 @@
+langchain
+huggingface-hub
+PySimpleGUI
+chainlit
+deep_translator
