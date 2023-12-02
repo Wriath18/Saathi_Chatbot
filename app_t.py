@@ -2,10 +2,7 @@ from langchain import PromptTemplate, LLMChain
 import chainlit as cl
 from langchain import HuggingFaceHub
 import PySimpleGUI as sg
-#from translate import Translator as TextTranslator
 from deep_translator import GoogleTranslator
-
-
 
 language_options = {
     'English': 'en',
@@ -22,12 +19,11 @@ language_options = {
     'Arabic': 'ar'
 }
 
-
 a = []  # Language selection list
+
 def select_language(window, event, values):
     a.append(language_options[values['-LANGUAGE-']])
     window.close()
-
 
 # GUI for language selection
 sg.theme('DefaultNoMoreLines')
@@ -44,16 +40,17 @@ while True:
 
 repo_id = "tiiuae/falcon-7b-instruct"
 llm = HuggingFaceHub(
-    huggingfacehub_api_token='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',
+    huggingfacehub_api_token='YOUR HUGGINGFACE API KEY',
     repo_id=repo_id,
-    model_kwargs={"temperature":0.3, "max_new_tokens":1024}
+    model_kwargs={"temperature": 0.3, "max_new_tokens": 1024}
 )
 
 # Chatbot prompt template
-template = """ Task: Chat with the user in a friendly and conversational manner.
+template = """ Task: Chat with the user in a highly friendly and conversational manner and responses should be long and fluent.
 Style: Conversational
 Tone: Friendly
 Audience: General public
+Chatbot's name : Saathi
 User says: "{user_input}"
 How should the chatbot respond?"""
 
@@ -70,19 +67,23 @@ def main():
 @cl.on_message
 async def main(message: cl.Message):
     llm_chain = cl.user_session.get("llm_chain")
-    print("User input:", message.content)
     
-    # Default to English if no language has been selected
     target_language_code = 'en'
-    if a:  # if language selection list is not empty
-        target_language_code = a[0]  # 'a' now contains the language code directly
+    if a:  
+        target_language_code = a[0] 
 
     res = await llm_chain.acall({"user_input": message.content}, callbacks=[cl.AsyncLangchainCallbackHandler()])
-    print("Model response before translation:", res["text"])
 
     translated_response = translate_text(res['text'], target_language_code)
-    print("Translated response:", translated_response)
-    await cl.Message(content=translated_response).send()
+    if "Saathi" in translated_response:
+        chatbot_message = translated_response.split("Saathi: ", 1)[-1].replace("User", "")
+    elif "Mini Saathi" in translated_response:
+        chatbot_message = translated_response.split("Mini Saathi: ", 1)[-1].replace("User", "")
+    else:
+        chatbot_message = translated_response.split("Chatbot: ", 1)[-1].replace("User", "")
+    
+    # Send the extracted chatbot's message back to the user
+    await cl.Message(content=chatbot_message).send()
 
 if __name__ == "__main__":
     main()
